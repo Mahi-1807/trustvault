@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrustVault — Secure Document Platform</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">🛡️</span>
+        <span class="brand-name">TrustVault</span>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" onclick="switchTab('documents')">📁 Documents</button>
+        <button class="nav-item" onclick="switchTab('audit')">📜 Audit Ledger</button>
+        <button class="nav-item" onclick="switchTab('attack-box')">⚡ Security Sandbox</button>
+        <button class="nav-item" onclick="switchTab('documentation')">📖 System Docs</button>
+      </nav>
+
+      <div class="user-profile">
+        <div class="profile-title">Active Persona</div>
+        <select id="userSelector" onchange="switchUser(this.value)">
+          <option value="alice">Alice (Owner)</option>
+          <option value="bob">Bob (Authorized Viewer)</option>
+          <option value="eve">Eve (Unauthorized User)</option>
+          <option value="admin">Admin (System Auditor)</option>
+        </select>
+        <div id="userBadge" class="role-badge">Owner</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- Documents Tab -->
+      <section id="tab-documents" class="tab-content active">
+        <header class="content-header">
+          <div>
+            <h1>Document Vault</h1>
+            <p>Cryptographically backed, zero-trust document store.</p>
+          </div>
+          <button class="btn btn-primary" id="uploadBtn" onclick="openModal('uploadModal')">+ Upload Document</button>
+        </header>
+
+        <div class="toolbar">
+          <input type="text" id="searchInput" placeholder="Search by name, owner, category..." onkeyup="filterDocs()" />
+          <select id="categoryFilter" onchange="filterDocs()">
+            <option value="ALL">All Categories</option>
+            <option value="Legal">Legal</option>
+            <option value="HR">HR</option>
+            <option value="Finance">Finance</option>
+            <option value="Engineering">Engineering</option>
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Category</th>
+                <th>Owner</th>
+                <th>Access Level</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="documentTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Audit Ledger Tab -->
+      <section id="tab-audit" class="tab-content">
+        <header class="content-header">
+          <div>
+            <h1>Cryptographic Audit Ledger</h1>
+            <p>HMAC-chained, tamper-evident log of all system interactions.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="verifyLedgerIntegrity()">Verify Ledger Integrity</button>
+        </header>
+
+        <div id="ledgerVerificationStatus" class="banner success" style="display:none;"></div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Doc ID</th>
+                <th>Status</th>
+                <th>Signature Chain (HMAC)</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Security Sandbox Tab -->
+      <section id="tab-attack-box" class="tab-content">
+        <header class="content-header">
+          <div>
+            <h1>Security & Penetration Sandbox</h1>
+            <p>Simulate hostile attacks against backend access control rules.</p>
+          </div>
+        </header>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Direct IDOR File Fetch</h3>
+            <p>Attempt to bypass token authorization by requesting a raw document ID directly as an unauthorized user.</p>
+            <button class="btn btn-outline" onclick="runAttackScenario('idor')">Execute Attack</button>
+          </div>
+
+          <div class="card">
+            <h3>Tampered Token Attack</h3>
+            <p>Attempt to read a document using a modified or revoked pre-signed cryptographic token.</p>
+            <button class="btn btn-outline" onclick="runAttackScenario('tamperedToken')">Execute Attack</button>
+          </div>
+
+          <div class="card">
+            <h3>Revoked User Access Attempt</h3>
+            <p>Simulate an attempt to read a file after access has been instantly revoked by the owner.</p>
+            <button class="btn btn-outline" onclick="runAttackScenario('revokedAccess')">Execute Attack</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h3>Attack Execution Log</h3>
+          <pre id="attackLog" class="console-output">Ready to execute attack vector scenarios...</pre>
+        </div>
+      </section>
+
+      <!-- System Docs Tab -->
+      <section id="tab-documentation" class="tab-content">
+        <header class="content-header">
+          <div>
+            <h1>System Artifacts & Compliance Documents</h1>
+            <p>Architectural decisions, threat models, and AI prompts log.</p>
+          </div>
+        </header>
+
+        <div class="doc-tabs">
+          <button class="doc-tab active" onclick="showDoc('threats')">THREATS.md</button>
+          <button class="doc-tab" onclick="showDoc('prompts')">PROMPTS.md</button>
+          <button class="doc-tab" onclick="showDoc('api')">API_DOCS.md</button>
+        </div>
+
+        <div id="docViewer" class="doc-viewer"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Upload Modal -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-content">
+      <h2>Upload Confidential Document</h2>
+      <form id="uploadForm" onsubmit="handleUpload(event)">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" id="docTitle" required />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="docCategory">
+            <option value="Legal">Legal</option>
+            <option value="HR">HR</option>
+            <option value="Finance">Finance</option>
+            <option value="Engineering">Engineering</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Document Content</label>
+          <textarea id="docContent" rows="4" required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Upload Document</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Share/Permission Modal -->
+  <div id="shareModal" class="modal">
+    <div class="modal-content">
+      <h2>Manage Document Permissions</h2>
+      <p id="shareDocTitle" class="subtitle"></p>
+      <div id="permissionList" class="permission-list"></div>
+      
+      <h3>Grant Access</h3>
+      <div class="form-group inline">
+        <select id="grantUser">
+          <option value="bob">Bob (Authorized Viewer)</option>
+          <option value="eve">Eve (Unauthorized User)</option>
+        </select>
+        <button class="btn btn-primary" onclick="grantAccess()">Grant Read</button>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('shareModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

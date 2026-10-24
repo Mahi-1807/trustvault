@@ -1,0 +1,12 @@
+{
+  "name": "trustvault",
+  "version": "1.0.0",
+  "description": "Secure document sharing platform with real tamper-evident audit trails",
+  "main": "app.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": ["security", "audit-ledger", "zero-trust", "document-platform"],
+  "author": "TrustVault Team",
+  "license": "MIT"
+}
